@@ -19,6 +19,7 @@ class Player
         // game loop
         while (true)
         {
+            int minDistance = Int32.MaxValue;
             for (int i = 0; i < 3; i++)
             {
                 string scoreInfo = Console.ReadLine();
@@ -35,22 +36,26 @@ class Player
                 int reg5 = int.Parse(inputs[6]);
                 int reg6 = int.Parse(inputs[7]);
 
-                if(gpu != "GAME_OVER")
+                if (gpu != "GAME_OVER")
                 {
-                    int distanceToFence = gpu.IndexOf('#', reg0) - reg0;
+                    var reg = playerIdx == 0 ? reg0 :
+                        playerIdx == 1 ? reg1 : reg2;
 
-                    string output = distanceToFence == 3 ? "DOWN" :
-                        distanceToFence == 2 ? "LEFT" :
-                        distanceToFence == 1 ? "UP" :
-                        "RIGHT";
+                    var distance = gpu.IndexOf('#', reg) - reg;
+                    
+                    distance = distance <= 0 ? Int32.MaxValue : distance;
 
-                    Console.WriteLine(output);
-                }
-                else
-                {
-                    Console.WriteLine("UP");
+                    minDistance = Math.Min(distance, minDistance);
+
                 }
             }
+
+            string output = minDistance == 3 ? "DOWN" :
+                minDistance == 2 ? "LEFT" :
+                minDistance == 1 ? "UP" :
+                "RIGHT";
+
+            Console.WriteLine(output);
         }
     }
 }

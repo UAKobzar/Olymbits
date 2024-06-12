@@ -15,8 +15,8 @@ class Player
     static void Main(string[] args)
     {
 
-        List<string> allPlayerInputs = Enumerable.Range(0, (int)Math.Pow(4,8))
-            .Select(i=> i.ToString("x").PadLeft(4, '0')
+        List<string> allPlayerInputs = Enumerable.Range(0, (int)Math.Pow(4, 8))
+            .Select(i => i.ToString("x").PadLeft(4, '0')
                     .Replace("0", "UU")
                     .Replace("1", "UD")
                     .Replace("2", "UL")
@@ -40,9 +40,27 @@ class Player
         // game loop
         while (true)
         {
+            int minimizeGameIndex = 0;
             for (int i = 0; i < 3; i++)
             {
                 string scoreInfo = Console.ReadLine();
+
+                if(i == playerIdx)
+                {
+                    int minimumGameScore = Int32.MaxValue;
+
+                    var scores = scoreInfo.Split(' ').Select(Int32.Parse).ToList();
+
+                    for(int j = 0; j < nbGames; j++)
+                    {
+                        var score = scores[j * 3 + 1] * 3 + scores[j * 3 + 2];
+                        if(score < minimumGameScore)
+                        {
+                            minimumGameScore = score;
+                            minimizeGameIndex = j;
+                        }
+                    }
+                }
             }
             List<GameInputs> gameInputs = new List<GameInputs>();
             for (int i = 0; i < nbGames; i++)
@@ -50,7 +68,7 @@ class Player
                 gameInputs.Add(new GameInputs(Console.ReadLine()));
             }
 
-            double min = Double.MaxValue;
+            double[] min = new double[4] { Double.MaxValue, Double.MaxValue, Double.MaxValue, Double.MaxValue, };
             char input = 'U';
 
             var sw = new Stopwatch();
@@ -60,7 +78,7 @@ class Player
             {
                 var score = SimulateAll(gameInputs, playerIdx, playerInputs);
 
-                if(score < min)
+                if (IsScoreBetter(min, score, minimizeGameIndex))
                 {
                     min = score;
                     input = playerInputs[0];
@@ -220,7 +238,7 @@ class Player
         return _maxDivingPoints - points;
     }
 
-    private static double SimulateAll(List<GameInputs> inputs, int playerIdx, string playerInputs)
+    private static double[] SimulateAll(List<GameInputs> inputs, int playerIdx, string playerInputs)
     {
         double[] points = new double[4]
         {
@@ -230,7 +248,18 @@ class Player
             SimulateDiving(inputs[3], playerIdx, playerInputs),
         };
 
-        return points.Sum();
+        return points;
+    }
+
+    private static bool IsScoreBetter(double[] oldScore, double[] newScore, int minimizeIndex)
+    {
+        if (oldScore[minimizeIndex] < newScore[minimizeIndex]) return false;
+        if (oldScore[minimizeIndex] > newScore[minimizeIndex]) return true;
+
+        var oldOtherScore = oldScore.Sum() - oldScore[minimizeIndex];
+        var newOtherScore = newScore.Sum() - newScore[minimizeIndex];
+
+        return newOtherScore < oldOtherScore;
     }
 
     //private const int _genomeLength = 10;

@@ -14,7 +14,6 @@ class Player
 {
     static void Main(string[] args)
     {
-
         List<string> allPlayerInputs = Enumerable.Range(0, (int)Math.Pow(4, 8))
             .Select(i => i.ToString("x").PadLeft(4, '0')
                     .Replace("0", "UU")
@@ -45,16 +44,16 @@ class Player
             {
                 string scoreInfo = Console.ReadLine();
 
-                if(i == playerIdx)
+                if (i == playerIdx)
                 {
                     int minimumGameScore = Int32.MaxValue;
 
                     var scores = scoreInfo.Split(' ').Select(Int32.Parse).ToList();
 
-                    for(int j = 0; j < nbGames; j++)
+                    for (int j = 0; j < nbGames; j++)
                     {
                         var score = scores[j * 3 + 1] * 3 + scores[j * 3 + 2];
-                        if(score < minimumGameScore)
+                        if (score < minimumGameScore)
                         {
                             minimumGameScore = score;
                             minimizeGameIndex = j;
@@ -184,7 +183,7 @@ class Player
         if (inputs.GPU == "GAME_OVER") return 0;
 
         int distance = inputs.Reg[playerIdx];
-        int risk = inputs.Reg[playerIdx * 2];
+        int risk = inputs.Reg[playerIdx + 3];
 
         if (risk < 0)
         {
@@ -193,6 +192,8 @@ class Player
 
         int indexOfInput = inputs.GPU.IndexOf(playerInputs[0]);
 
+        return indexOfInput == 3 ? 0 : 1;
+
         int deltaDistance =
             indexOfInput == 0 ? 1 :
             indexOfInput == 3 ? 3 :
@@ -200,6 +201,7 @@ class Player
         risk +=
             indexOfInput == 0 ? -1 :
             indexOfInput == 3 ? 2 :
+            indexOfInput == 1 ? 0 :
             1;
 
         risk = risk < 0 ? 0 : risk;
@@ -217,6 +219,7 @@ class Player
     private const int _maxDivingPoints = 120;
     private static double SimulateDiving(GameInputs inputs, int playerIdx, string playerInputs)
     {
+        if (!inputs.ShouldSimulateDiving) return 0;
         if (inputs.GPU == "GAME_OVER") return 0;
 
         int points = inputs.Reg[playerIdx];
@@ -293,4 +296,30 @@ class GameInputs
 
     public string GPU { get; private set; }
     public IReadOnlyList<int> Reg { get; private set; }
+
+    private bool? _shouldSimulateDiving = null;
+    public bool ShouldSimulateDiving
+    {
+        get
+        {
+            if( _shouldSimulateDiving != null)
+                return _shouldSimulateDiving.Value;
+
+            var scores = Reg.Take(3).ToList();
+            var maxScores = Reg.Skip(3).Take(3).Select(c => (c + 1 + c + GPU.Length) / 2 * GPU.Length).ToList();
+
+            for( var i = 0; i < scores.Count; i++)
+            {
+                var otherMaxScore = maxScores.Where((s, ind) => ind != i).Max();
+                if (scores[i] > otherMaxScore)
+                {
+                    _shouldSimulateDiving = false;
+                    return false;
+                }
+            }
+
+            _shouldSimulateDiving = true;
+            return true;
+        }
+    }
 }
